@@ -1,0 +1,11 @@
+{
+  "vendor": true,
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "singleQuote": true
+  }
+}
