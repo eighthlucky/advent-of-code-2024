@@ -1,5 +1,9 @@
 {
   "vendor": true,
+  "tasks": {
+    "dev": "deno --allow-read --watch ./**/*.ts",
+    "run-all": "deno --allow-read ./**/*.ts"
+  },
   "lint": {
     "rules": {
       "tags": ["recommended"]

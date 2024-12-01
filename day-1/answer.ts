@@ -1,4 +1,6 @@
 // Setup
+console.log('---Day 1---');
+
 const text = Deno.readTextFileSync(`${import.meta.dirname}/input.txt`);
 const lists = text.split('\n')
   .flatMap((line) =>
