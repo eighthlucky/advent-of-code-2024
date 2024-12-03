@@ -2,12 +2,6 @@
 console.log('---Day 2---');
 
 const text = Deno.readTextFileSync(`${import.meta.dirname}/input.txt`);
-// const text = `7 6 4 2 1
-// 1 2 7 8 9
-// 9 7 6 2 1
-// 1 3 2 4 5
-// 8 6 4 4 1
-// 1 3 6 7 9`;
 const reports = text.split('\n')
   .map((line) =>
     line
@@ -49,42 +43,61 @@ const reports = text.split('\n')
 // Part 2 - Count valid reports, tolerating a single error
 {
   let validCount = 0;
-  const getCost = (a: number | undefined, b: number | undefined, c: number) => {
-    if (b === undefined) return 0;
-    const diff = c - b;
-    if (!diff) return 1;
-
-    const dist = Math.abs(diff);
-    if (dist < 1 || dist > 3) return 1;
-    if (a !== undefined && Math.sign(diff) !== Math.sign(b - a)) return 1;
-  };
 
   for (const report of reports) {
-    const queue = [[-1, 0]];
-    const path = [];
+    let modeGradient = 0;
+    report.reduce((a, b) => {
+      modeGradient += Math.sign(b - a);
+      return b;
+    });
+    modeGradient = Math.sign(modeGradient);
 
-    while (queue.length) {
-      const [prev, index] = queue.pop() ?? [];
-      if (index >= report.length) break;
+    const possibleSequences = [
+      // we don't need the full array, theoretically, as we can tolerate a single
+      // error
+      Iterator.from(report),
 
-      const cost = getCost(
-        report[index - 2],
-        report[prev],
-        report[index],
-      );
+      // Possible sequences with single value removed
+      ...report.map((_, i) => Iterator.from(report).filter((_, j) => j !== i)),
+    ];
 
-      const next = index + 1;
-      if (cost) {
-        queue.push([prev, next]);
+    let hasValid = false;
+    for (const sequence of possibleSequences) {
+      let prevLevel = undefined;
+      let isErr = false;
+
+      for (const level of sequence) {
+        // Skip first value
+        if (prevLevel === undefined) {
+          prevLevel = level;
+          continue;
+        }
+
+        const diff = level - prevLevel;
+        const gradient = Math.sign(diff);
+        const dist = Math.abs(diff);
+
+        // Valid reports must be in ASC or DESC order, and the difference
+        // between levels must be between 1 and 3 (incl.)
+        const isValid = gradient === modeGradient && dist >= 1 && dist <= 3;
+        if (!isValid) {
+          isErr = true;
+          break;
+        }
+
+        prevLevel = level;
         continue;
       }
 
-      queue.push([index, next]);
-      if (index >= 0) path.push(report[index]);
+      if (isErr) continue;
+
+      // If we're at this point, we've looped through a whole sequence without
+      // any issues
+      hasValid = true;
+      break;
     }
 
-    const isValid = path.length >= report.length - 1;
-    if (isValid) validCount++;
+    if (hasValid) validCount++;
   }
 
   console.log('valid reports with tolerance 1:', validCount);
