@@ -12,7 +12,7 @@ const lines = text.split('\n');
       Iterator.from(line)
         .map((char, x) => char === SEARCH_STRING[0] ? [x, y] : undefined)
         .filter((location) => !!location)
-    ).toArray();
+    );
 
   // Prep for traversal in 8 directions
   const directions = [-1, 0, 1]
@@ -46,4 +46,38 @@ const lines = text.split('\n');
   }
 
   console.log("'XMAS' count:", validCount);
+}
+
+// Part 2 - Find each MAS pair forming an X
+{
+  const SEARCH_STRING = 'MAS';
+  const aLocations = lines.entries()
+    .flatMap(([y, line]) =>
+      Iterator.from(line)
+        .map((char, x) => char === SEARCH_STRING[1] ? [x, y] : undefined)
+        .filter((location) => !!location)
+    );
+
+  // Prep for traversal in 4 directions
+  const directions = [-1, 1]
+    .flatMap((xDir, _, arr) => arr.map((yDir) => [xDir, yDir]));
+
+  let validCount = 0;
+  for (const coordinates of aLocations) {
+    let foundCount = 0;
+    for (const [xDir, yDir] of directions) {
+      const [x, y] = coordinates;
+
+      const prev = lines[y - yDir]?.[x - xDir];
+      const next = lines[y + yDir]?.[x + xDir];
+
+      if (prev === SEARCH_STRING[0] && next === SEARCH_STRING[2]) {
+        foundCount++;
+      }
+    }
+
+    if (foundCount >= 2) validCount++;
+  }
+
+  console.log('found MAS pairs in shape of X', validCount);
 }
