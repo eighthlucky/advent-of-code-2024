@@ -1,5 +1,5 @@
 // Setup
-console.log('---Day 3---');
+console.log('---Day 4---');
 
 const text = Deno.readTextFileSync(new URL('./input.txt', import.meta.url));
 const lines = text.split('\n');
