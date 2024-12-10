@@ -61,3 +61,42 @@ const trailHeads = grid
 
   console.log('total score of trailheads:', score);
 }
+
+// Part 2 - Calculate rating of trailheads
+// Similar to part 1, but we track unique paths to top
+{
+  let rating = 0;
+  for (const trailHead of trailHeads) {
+    const stack = [trailHead];
+
+    while (stack.length) {
+      const [x, y] = stack.pop() ?? [];
+      if (
+        typeof x === 'undefined' ||
+        typeof y === 'undefined'
+      ) throw new Error('missing coordinates');
+
+      const height = grid[y][x];
+      if (height >= 9) {
+        rating++;
+        continue;
+      }
+
+      // Valid neighbours are in-bounds and are higher than current height by 1
+      const neighbours = ([
+        [x - 1, y],
+        [x, y - 1],
+        [x + 1, y],
+        [x, y + 1],
+      ] as const)
+        .filter(([x2, y2]) => {
+          const _height = grid[y2]?.[x2] ?? -1;
+          return _height === height + 1;
+        });
+
+      stack.push(...neighbours);
+    }
+  }
+
+  console.log('total rating of trailheads:', rating);
+}
