@@ -57,3 +57,43 @@ const initialStones = text
 
   console.log('total stones:', values.length);
 }
+
+// Part 2 - Iterate over stones 75 times
+// Otherwise, same as part 1
+{
+  const BATCH_SIZE = 100_000;
+  const ITERATIONS = 35;
+  const WORKER_URL = new URL('./worker.ts', import.meta.url);
+
+  let values = initialStones.values();
+  for (const _ of Array.from({ length: ITERATIONS })) {
+    const promises: Promise<number[]>[] = [];
+
+    let batchIndex = 0;
+    while (true) {
+      const batch = values.take(BATCH_SIZE).toArray();
+      if (!batch.length) break;
+
+      const { promise, resolve } = Promise.withResolvers<number[]>();
+      promises[batchIndex] = promise;
+      batchIndex++;
+
+      const worker = new Worker(WORKER_URL, { type: 'module' });
+      promise.finally(() => worker.terminate());
+
+      worker.addEventListener(
+        'message',
+        (e) => resolve(e.data),
+        { once: true, passive: true },
+      );
+
+      setTimeout(() => worker.postMessage(batch), 1);
+    }
+
+    values = (await Promise.all(promises))
+      .flatMap((data) => data)
+      .values();
+  }
+
+  console.log('total stones:', values.toArray().length);
+}
