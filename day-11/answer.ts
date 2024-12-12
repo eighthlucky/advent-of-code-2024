@@ -61,39 +61,36 @@ const initialStones = text
 // Part 2 - Iterate over stones 75 times
 // Otherwise, same as part 1
 {
-  const BATCH_SIZE = 100_000;
-  const ITERATIONS = 35;
-  const WORKER_URL = new URL('./worker.ts', import.meta.url);
+  const ITERATIONS = 45;
 
   let values = initialStones.values();
   for (const _ of Array.from({ length: ITERATIONS })) {
-    const promises: Promise<number[]>[] = [];
+    values = values.flatMap((v) => {
+      // Case: 0 -> 1
+      if (v === 0) return [1];
 
-    let batchIndex = 0;
-    while (true) {
-      const batch = values.take(BATCH_SIZE).toArray();
-      if (!batch.length) break;
+      // Case: even digits -> split
+      // https://math.stackexchange.com/questions/469606/how-to-get-count-of-digits-of-a-number
+      const numDigits = Math.floor(Math.log10(v)) + 1;
+      if (numDigits % 2 === 0) {
+        const digitsPerSide = numDigits / 2;
+        const split = 10 ** digitsPerSide;
 
-      const { promise, resolve } = Promise.withResolvers<number[]>();
-      promises[batchIndex] = promise;
-      batchIndex++;
+        const right = v % split;
+        const left = (v - right) / split;
 
-      const worker = new Worker(WORKER_URL, { type: 'module' });
-      promise.finally(() => worker.terminate());
+        return [left, right];
+      }
 
-      worker.addEventListener(
-        'message',
-        (e) => resolve(e.data),
-        { once: true, passive: true },
-      );
+      // Case: other -> multiply 2024
+      return [v * 2024];
+    });
 
-      setTimeout(() => worker.postMessage(batch), 1);
-    }
-
-    values = (await Promise.all(promises))
-      .flatMap((data) => data)
-      .values();
+    console.count('iteration');
   }
 
-  console.log('total stones:', values.toArray().length);
+  let total = 0;
+  values.forEach(() => total++);
+
+  console.log('total stones:', total);
 }
