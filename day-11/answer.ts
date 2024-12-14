@@ -61,36 +61,71 @@ const initialStones = text
 // Part 2 - Iterate over stones 75 times
 // Otherwise, same as part 1
 {
-  const ITERATIONS = 45;
+  const ITERATIONS = 75;
 
-  let values = initialStones.values();
-  for (const _ of Array.from({ length: ITERATIONS })) {
-    values = values.flatMap((v) => {
-      // Case: 0 -> 1
-      if (v === 0) return [1];
+  // Calculate next stone(s) from current
+  const _nextNumbers = (value: number) => {
+    // Case: 0 -> 1
+    if (value === 0) return [1];
 
-      // Case: even digits -> split
-      // https://math.stackexchange.com/questions/469606/how-to-get-count-of-digits-of-a-number
-      const numDigits = Math.floor(Math.log10(v)) + 1;
-      if (numDigits % 2 === 0) {
-        const digitsPerSide = numDigits / 2;
-        const split = 10 ** digitsPerSide;
+    // Case: even digits -> split
+    // https://math.stackexchange.com/questions/469606/how-to-get-count-of-digits-of-a-number
+    const numDigits = Math.floor(Math.log10(value)) + 1;
+    if (numDigits % 2 === 0) {
+      const digitsPerSide = numDigits / 2;
+      const split = 10 ** digitsPerSide;
 
-        const right = v % split;
-        const left = (v - right) / split;
+      const right = value % split;
+      const left = (value - right) / split;
 
-        return [left, right];
-      }
+      return [left, right];
+    }
 
-      // Case: other -> multiply 2024
-      return [v * 2024];
-    });
+    // Case: other -> multiply 2024
+    return [value * 2024];
+  };
 
-    console.count('iteration');
-  }
+  // Cached version of _nextNumbers()
+  const cache = new Map<number, number[]>();
+  const nextNumbers = (v: number) => {
+    if (cache.has(v)) return cache.get(v) ?? [];
 
-  let total = 0;
-  values.forEach(() => total++);
+    const result = _nextNumbers(v) ?? [];
+    cache.set(v, result);
+    return result;
+  };
 
-  console.log('total stones:', total);
+  // Recursively figure out the total number of stones, given
+  // an initial sequence and a number of iterations
+  const nextIterationStonesCache = new Map<string, number>();
+  const countStones = (
+    values: number[],
+    _iteration = ITERATIONS,
+  ): number => {
+    if (_iteration <= 0) return values.length;
+    if (!values.length) return 0;
+
+    if (values.length === 1) {
+      return countStones(
+        nextNumbers(values[0]),
+        _iteration - 1,
+      );
+    }
+
+    const key = `${_iteration}_${JSON.stringify(values)}`;
+    if (nextIterationStonesCache.has(key)) {
+      return nextIterationStonesCache.get(key) ?? Number.NaN;
+    }
+
+    const total = values.reduce(
+      (acc, v) =>
+        acc +
+        countStones(nextNumbers(v), _iteration - 1),
+      0,
+    );
+    nextIterationStonesCache.set(key, total);
+    return total;
+  };
+
+  console.log('total stones:', countStones(initialStones));
 }
